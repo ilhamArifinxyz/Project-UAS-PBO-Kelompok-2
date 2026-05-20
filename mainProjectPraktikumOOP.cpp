@@ -1,33 +1,25 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <cstdlib> // Untuk rand() dan srand() (angka acak)
-#include <ctime>   // Untuk time() (seed angka acak)
-#include <limits>  // Untuk validasi input (menghindari error huruf di menu angka)
-#include <cctype> // Untuk fungsi isalpha() dan isspace()
-
+#include <cstdlib>
+#include <ctime>
+#include <limits>
+#include <cctype>
 using namespace std;
 
-// ==========================================
-// FUNGSI BANTUAN (HELPER)
-// ==========================================
-
-// Fungsi untuk mencegah program error/looping jika user memasukkan huruf pada input angka
 int getValidInt() {
     int value;
     while (true) {
         if (cin >> value) {
-            break; // Input benar berupa angka, keluar dari loop
+            break;
         }
-        // Jika gagal (input huruf/simbol)
         cout << "Input tidak valid! Harap masukkan angka: ";
         cin.clear(); // Menghapus status error pada cin
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Membuang sisa input yang salah di buffer
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
     return value;
 }
 
-// Fungsi untuk memvalidasi bahwa input nama hanya berisi huruf dan spasi
 string getValidName() {
     string name;
     bool isValid;
@@ -45,13 +37,13 @@ string getValidName() {
                 // Jika karakter bukan huruf dan bukan spasi, maka tidak valid
                 if (!isalpha(name[i]) && !isspace(name[i])) {
                     isValid = false;
-                    break; // Keluar dari loop pengecekan karakter
+                    break;
                 }
             }
         }
 
         if (isValid) {
-            return name; // Jika lolos semua cek, kembalikan nama
+            return name;
         } else {
             cout << "Input tidak valid! Nama hanya boleh berisi huruf dan spasi." << endl;
             cout << "Masukkan Nama Lengkap: ";
@@ -59,21 +51,15 @@ string getValidName() {
     }
 }
 
-// ==========================================
-// 1. ABSTRACTION & ENCAPSULATION
-// ==========================================
-
-// Kelas dasar (Base Class) yang bersifat abstrak
 class Account {
-protected: // Encapsulation: Atribut hanya bisa diakses oleh class ini dan class turunannya
+protected:
     string accountNumber;
     string username;
     string password;
     double balance;
-    vector<string> transactionHistory; // Menyimpan riwayat mutasi rekening
+    vector<string> transactionHistory;
 
 public:
-    // Constructor untuk inisialisasi data awal
     Account(string accNum, string name, string pass, double initialBalance) {
         accountNumber = accNum;
         username = name;
@@ -82,20 +68,16 @@ public:
         addHistory("Account created with initial deposit: Rp " + to_string(initialBalance));
     }
 
-    // Abstraction: Pure virtual function. Memaksa class turunan untuk membuat fungsi ini
     virtual string getAccountType() const = 0;
 
-    // Getter untuk mengambil data (karena atribut bersifat protected)
     string getAccountNumber() { return accountNumber; }
     string getUsername() { return username; }
     double getBalance() { return balance; }
 
-    // Fungsi untuk mencocokkan password saat login
     bool verifyPassword(string pass) {
         return password == pass;
     }
 
-    // Fungsi untuk menambah catatan riwayat transaksi
     void addHistory(string record) {
         transactionHistory.push_back(record);
     }
@@ -105,7 +87,6 @@ public:
         if (transactionHistory.empty()) {
             cout << "Belum ada transaksi." << endl;
         } else {
-            // Looping untuk menampilkan isi vector history
             for (size_t i = 0; i < transactionHistory.size(); i++) {
                 cout << i + 1 << ". " << transactionHistory[i] << endl;
             }
@@ -113,7 +94,6 @@ public:
         cout << "=========================" << endl;
     }
 
-    // Fungsi setor tunai
     void deposit(double amount) {
         if (amount > 0) {
             balance += amount;
@@ -138,72 +118,50 @@ public:
     }
 };
 
-// ==========================================
-// 2. INHERITANCE (Pewarisan)
-// ==========================================
-
-// Class SavingsAccount (Tabungan) mewarisi class Account
 class SavingsAccount : public Account {
 public:
-    // Memanggil constructor dari Base Class
     SavingsAccount(string accNum, string name, string pass, double initialBalance)
         : Account(accNum, name, pass, initialBalance) {}
 
-    // Polymorphism: Mengimplementasikan pure virtual function dari Base Class
     string getAccountType() const override {
         return "Regular Savings";
     }
 
-    // Polymorphism: Menimpa (override) fungsi tarik tunai dari Base Class
-    // Misalnya ada aturan bisnis: Tabungan reguler harus menyisakan saldo minimal Rp 50.000
     bool withdraw(double amount) override {
         if (balance - amount < 50000) {
             cout << "Tarik tunai gagal! Saldo mengendap minimal adalah Rp 50.000." << endl;
             return false;
         }
-        // Jika lolos pengecekan di atas, panggil fungsi withdraw dari class induk
         return Account::withdraw(amount); 
     }
 };
 
-// ==========================================
-// KELAS UTAMA: SISTEM BANK
-// ==========================================
-
 class BankSystem {
 private:
-    // Vector untuk menyimpan pointer ke Account. 
-    // Menggunakan pointer agar bisa menyimpan objek dari class turunan (Polymorphism)
     vector<Account*> accounts;
-
-    // Fungsi membuat nomor rekening acak 6 digit
     string generateRandomAccountNumber() {
         string accNum = "";
         for (int i = 0; i < 6; i++) {
-            int randomDigit = rand() % 10; // Mengambil angka acak 0-9
+            int randomDigit = rand() % 10;
             accNum += to_string(randomDigit);
         }
         return accNum;
     }
 
 public:
-    // Destructor: Membersihkan memori pointer saat program ditutup
     ~BankSystem() {
         for (size_t i = 0; i < accounts.size(); i++) {
             delete accounts[i];
         }
     }
-
-    // Fitur Registrasi / Pembuatan Rekening Baru
     void createAccount() {
         string name, pass;
         double initialDeposit;
 
         cout << "\n=== PEMBUATAN REKENING BARU ===" << endl;
         cout << "Masukkan Nama Lengkap: ";
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Membersihkan buffer secara total sebelum getline
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
         
-        // Memanggil fungsi validasi nama
         name = getValidName(); 
         
         cout << "Buat PIN/Password: ";
@@ -211,16 +169,15 @@ public:
 
         cout << "Masukkan Setoran Awal (Minimal Rp 100000): ";
         while (true) {
-            initialDeposit = getValidInt(); // Memakai fungsi validasi
+            initialDeposit = getValidInt();
             if (initialDeposit >= 100000) {
-                break; // Lolos aturan bisnis
+                break;
             }
             cout << "Setoran kurang! Minimal Rp 100000. Masukkan lagi: ";
         }
 
         string newAccNum = generateRandomAccountNumber();
 
-        // Membuat objek SavingsAccount baru dan memasukkannya ke vector Account*
         Account* newAccount = new SavingsAccount(newAccNum, name, pass, initialDeposit);
         accounts.push_back(newAccount);
 
@@ -228,8 +185,6 @@ public:
         cout << "Nomor Rekening Anda : " << newAccNum << " (HARAP DICATAT!)" << endl;
         cout << "Jenis Rekening      : " << newAccount->getAccountType() << endl;
     }
-
-    // Fitur Login yang mengembalikan pointer ke akun yang berhasil login
     Account* login() {
         string accNum, pass;
         cout << "\n=== LOGIN NASABAH ===" << endl;
@@ -238,15 +193,14 @@ public:
         cout << "PIN/Password  : ";
         cin >> pass;
 
-        // Mencari akun di dalam vector
         for (size_t i = 0; i < accounts.size(); i++) {
             if (accounts[i]->getAccountNumber() == accNum && accounts[i]->verifyPassword(pass)) {
-                return accounts[i]; // Login berhasil, kembalikan objek akunnya
+                return accounts[i];
             }
         }
         
         cout << "Login Gagal! Nomor rekening atau password salah." << endl;
-        return nullptr; // Mengembalikan null jika tidak ketemu
+        return nullptr;
     }
 
     // Fitur Transfer Antar Rekening
@@ -263,7 +217,6 @@ public:
             return;
         }
 
-        // Mencari rekening tujuan
         Account* receiver = nullptr;
         for (size_t i = 0; i < accounts.size(); i++) {
             if (accounts[i]->getAccountNumber() == targetAccNum) {
@@ -280,28 +233,19 @@ public:
         cout << "Masukkan jumlah yang ingin ditransfer: Rp ";
         amount = getValidInt();
 
-        // Jika saldo pengirim berhasil ditarik, tambahkan ke penerima
         if (sender->withdraw(amount)) {
-            // Karena fungsi withdraw Base Class menambah history "Withdrawal", 
-            // kita bisa hapus/ganti logic historynya khusus untuk transfer agar lebih rapi (bisa dikembangkan nanti)
             receiver->deposit(amount); 
             cout << "Transfer ke " << receiver->getUsername() << " berhasil!" << endl;
         }
     }
 };
 
-// ==========================================
-// FUNGSI UTAMA (MAIN)
-// ==========================================
-
 int main() {
-    // Seed untuk membuat angka acak yang benar-benar berbeda setiap kali run
     srand(time(0)); 
 
     BankSystem myBank;
     int choice;
 
-    // Loop Menu Utama Bank
     while (true) {
         cout << "\n=== SIMULASI SISTEM BANK ===" << endl;
         cout << "1. Buka Rekening Baru" << endl;
@@ -316,7 +260,6 @@ int main() {
         else if (choice == 2) {
             Account* loggedInUser = myBank.login();
             
-            // Jika login berhasil, masuk ke Menu Nasabah
             if (loggedInUser != nullptr) {
                 int userChoice;
                 bool isLoggedOut = false;
@@ -369,6 +312,5 @@ int main() {
             cout << "Pilihan tidak valid! Silakan coba lagi." << endl;
         }
     }
-
     return 0;
 }
